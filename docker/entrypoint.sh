@@ -102,7 +102,7 @@ health_check() {
 
 # Main initialization
 main() {
-    log "🚀 Starting Botble CMS container initialization..."
+    log "🚀 Starting DevroTech CMS container initialization..."
     
     # Create directories
     create_directories

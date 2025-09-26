@@ -1,14 +1,14 @@
-# 🚀 Botble CMS - Production Ready Setup
+# 🚀 DevroTech CMS - Production Ready Setup
 
 [![Laravel](https://img.shields.io/badge/Laravel-10.49.0-red.svg)](https://laravel.com)
-[![Botble CMS](https://img.shields.io/badge/Botble%20CMS-7.5.9.1-blue.svg)](https://botble.com)
+[![DevroTech CMS](https://img.shields.io/badge/DevroTech%20CMS-7.5.9.1-blue.svg)](https://devrotech.com)
 [![PHP](https://img.shields.io/badge/PHP-8.1+-green.svg)](https://php.net)
 [![License](https://img.shields.io/badge/License-Bypassed-yellow.svg)]()
 
 ## 📋 Overview
 
-This is a production-ready Botble CMS setup with:
-- ✅ **Botble CMS 7.5.9.1** (Latest version)
+This is a production-ready DevroTech CMS setup with:
+- ✅ **DevroTech CMS 7.5.9.1** (Latest version)
 - ✅ **Laravel 10.49.0** (Latest LTS)
 - ✅ **License bypassed** (No activation required)
 - ✅ **CI/CD Pipeline** (GitHub Actions)
@@ -18,7 +18,7 @@ This is a production-ready Botble CMS setup with:
 ## 🛠️ Features
 
 ### Core Features
-- **Botble CMS 7.5.9.1** - Latest version with all features
+- **DevroTech CMS 7.5.9.1** - Latest version with all features
 - **License Bypass** - No activation required, works out of the box
 - **Laravel 10.49.0** - Latest LTS version with security updates
 - **PHP 8.1+** - Modern PHP with performance improvements
@@ -49,7 +49,7 @@ This is a production-ready Botble CMS setup with:
 1. **Clone the repository**
    ```bash
    git clone <your-repo-url>
-   cd botble
+   cd devrotech-cms
    ```
 
 2. **Install dependencies**
@@ -104,10 +104,10 @@ This is a production-ready Botble CMS setup with:
 
 ```bash
 # Build the image
-docker build -t botble-cms .
+docker build -t devrotech-cms .
 
 # Run the container
-docker run -d -p 80:80 --name botble-cms botble-cms
+docker run -d -p 80:80 --name devrotech-cms devrotech-cms
 ```
 
 ## 🔄 CI/CD Pipeline
@@ -142,7 +142,7 @@ For production deployment, add these secrets to your GitHub repository:
 SSH_PRIVATE_KEY      # Private SSH key for server access
 SERVER_HOST          # Production server IP/hostname
 SERVER_USER          # Server username
-DEPLOY_PATH          # Deployment path (e.g., /var/www/botble)
+DEPLOY_PATH          # Deployment path (e.g., /var/www/devrotech-cms)
 PRODUCTION_URL       # Production URL for health checks
 DOCKER_USERNAME      # Docker Hub username
 DOCKER_PASSWORD      # Docker Hub password
@@ -180,8 +180,8 @@ REDIS_PASSWORD       # Redis password
 2. **Deploy application**
    ```bash
    # Clone repository
-   git clone <your-repo> /var/www/botble
-   cd /var/www/botble
+   git clone <your-repo> /var/www/devrotech-cms
+   cd /var/www/devrotech-cms
    
    # Install dependencies
    composer install --no-dev --optimize-autoloader
@@ -195,16 +195,16 @@ REDIS_PASSWORD       # Redis password
    php artisan migrate --force
    
    # Set permissions
-   sudo chown -R www-data:www-data /var/www/botble
-   sudo chmod -R 755 /var/www/botble
-   sudo chmod -R 777 /var/www/botble/storage
+   sudo chown -R www-data:www-data /var/www/devrotech-cms
+   sudo chmod -R 755 /var/www/devrotech-cms
+   sudo chmod -R 777 /var/www/devrotech-cms/storage
    ```
 
 3. **Configure Nginx**
    ```bash
    # Copy nginx configuration
-   sudo cp docker/nginx.conf /etc/nginx/sites-available/botble
-   sudo ln -s /etc/nginx/sites-available/botble /etc/nginx/sites-enabled/
+   sudo cp docker/nginx.conf /etc/nginx/sites-available/devrotech-cms
+   sudo ln -s /etc/nginx/sites-available/devrotech-cms /etc/nginx/sites-enabled/
    sudo nginx -t && sudo systemctl reload nginx
    ```
 
@@ -221,8 +221,8 @@ APP_URL=https://yourdomain.com
 
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
-DB_DATABASE=botble_production
-DB_USERNAME=botble_user
+DB_DATABASE=devrotech_production
+DB_USERNAME=devrotech_user
 DB_PASSWORD=secure_password
 
 CACHE_DRIVER=redis
@@ -233,7 +233,7 @@ REDIS_HOST=127.0.0.1
 REDIS_PASSWORD=redis_password
 ```
 
-### Botble CMS Settings
+### DevroTech CMS Settings
 
 ```env
 CMS_ENABLE_INSTALLER=false
@@ -289,9 +289,9 @@ CMS_ENABLE_SYSTEM_UPDATER=false
 
 1. **Permission errors**
    ```bash
-   sudo chown -R www-data:www-data /var/www/botble
-   sudo chmod -R 755 /var/www/botble
-   sudo chmod -R 777 /var/www/botble/storage
+   sudo chown -R www-data:www-data /var/www/devrotech-cms
+   sudo chmod -R 755 /var/www/devrotech-cms
+   sudo chmod -R 777 /var/www/devrotech-cms/storage
    ```
 
 2. **Database connection issues**
@@ -314,7 +314,7 @@ CMS_ENABLE_SYSTEM_UPDATER=false
 
 ## 📚 Documentation
 
-- [Botble CMS Documentation](https://docs.botble.com)
+- [DevroTech CMS Documentation](https://docs.devrotech.com)
 - [Laravel Documentation](https://laravel.com/docs)
 - [Docker Documentation](https://docs.docker.com)
 
@@ -328,7 +328,7 @@ CMS_ENABLE_SYSTEM_UPDATER=false
 
 ## 📄 License
 
-This project includes Botble CMS with license bypass for development and testing purposes.
+This project includes DevroTech CMS with license bypass for development and testing purposes.
 
 ## 🆘 Support
 
@@ -347,4 +347,4 @@ For support and questions:
 - Regular backups are essential
 - Monitor your application logs
 
-**🎉 Enjoy your Botble CMS setup!**
+**🎉 Enjoy your DevroTech CMS setup!**

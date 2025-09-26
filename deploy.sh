@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Botble CMS Production Deployment Script
+# DevroTech CMS Production Deployment Script
 # Usage: ./deploy.sh [environment] [options]
 
 set -e
@@ -14,8 +14,8 @@ NC='\033[0m' # No Color
 
 # Configuration
 ENVIRONMENT=${1:-production}
-BACKUP_DIR="/var/backups/botble"
-LOG_FILE="/var/log/botble-deploy.log"
+BACKUP_DIR="/var/backups/devrotech"
+LOG_FILE="/var/log/devrotech-deploy.log"
 MAINTENANCE_FILE="storage/framework/down"
 
 # Functions
@@ -43,10 +43,10 @@ fi
 
 # Check if we're in the right directory
 if [ ! -f "artisan" ]; then
-    error "Please run this script from the Botble CMS root directory"
+    error "Please run this script from the DevroTech CMS root directory"
 fi
 
-log "🚀 Starting Botble CMS deployment for environment: $ENVIRONMENT"
+log "🚀 Starting DevroTech CMS deployment for environment: $ENVIRONMENT"
 
 # Create backup
 backup() {
@@ -56,7 +56,7 @@ backup() {
     sudo mkdir -p $BACKUP_DIR
     
     # Create backup filename with timestamp
-    BACKUP_FILE="$BACKUP_DIR/botble-backup-$(date +%Y%m%d-%H%M%S).tar.gz"
+    BACKUP_FILE="$BACKUP_DIR/devrotech-backup-$(date +%Y%m%d-%H%M%S).tar.gz"
     
     # Create backup
     sudo tar -czf "$BACKUP_FILE" \
@@ -71,7 +71,7 @@ backup() {
     log "✅ Backup created: $BACKUP_FILE"
     
     # Keep only last 5 backups
-    sudo find $BACKUP_DIR -name "botble-backup-*.tar.gz" -type f -mtime +5 -delete
+    sudo find $BACKUP_DIR -name "devrotech-backup-*.tar.gz" -type f -mtime +5 -delete
 }
 
 # Enable maintenance mode
@@ -238,7 +238,7 @@ deploy() {
     info "   Date: $(date)"
     info "   PHP Version: $(php --version | head -n1)"
     info "   Laravel Version: $(php artisan --version)"
-    info "   Botble Version: $(php artisan tinker --execute="echo core()->getVersion();" 2>/dev/null || echo "Unknown")"
+    info "   DevroTech Version: $(php artisan tinker --execute="echo core()->getVersion();" 2>/dev/null || echo "Unknown")"
 }
 
 # Rollback function
@@ -246,7 +246,7 @@ rollback() {
     log "🔄 Starting rollback process..."
     
     # Find latest backup
-    LATEST_BACKUP=$(sudo find $BACKUP_DIR -name "botble-backup-*.tar.gz" -type f -printf '%T@ %p\n' | sort -n | tail -1 | cut -d' ' -f2)
+    LATEST_BACKUP=$(sudo find $BACKUP_DIR -name "devrotech-backup-*.tar.gz" -type f -printf '%T@ %p\n' | sort -n | tail -1 | cut -d' ' -f2)
     
     if [ -z "$LATEST_BACKUP" ]; then
         error "No backup found for rollback"
@@ -274,7 +274,7 @@ rollback() {
 
 # Show help
 show_help() {
-    echo "Botble CMS Deployment Script"
+    echo "DevroTech CMS Deployment Script"
     echo ""
     echo "Usage: $0 [COMMAND] [ENVIRONMENT]"
     echo ""

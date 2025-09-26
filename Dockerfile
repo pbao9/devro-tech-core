@@ -1,4 +1,4 @@
-# Botble CMS Production Dockerfile
+# DevroTech CMS Production Dockerfile
 FROM php:8.1-fpm-alpine
 
 # Set working directory

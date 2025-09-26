@@ -1,4 +1,4 @@
-# 🚀 Botble CMS - Quick Setup Guide
+# 🚀 DevroTech CMS - Quick Setup Guide
 
 ## 📋 Prerequisites
 
@@ -13,7 +13,7 @@
 ### 1. Clone & Install
 ```bash
 git clone <your-repo-url>
-cd botble
+cd devrotech-cms
 composer install
 npm install
 ```
@@ -27,10 +27,10 @@ php artisan key:generate
 ### 3. Database Setup
 ```bash
 # Create database
-mysql -u root -p -e "CREATE DATABASE botble_cms;"
+mysql -u root -p -e "CREATE DATABASE devrotech_cms;"
 
 # Update .env with your database credentials
-# DB_DATABASE=botble_cms
+# DB_DATABASE=devrotech_cms
 # DB_USERNAME=your_username
 # DB_PASSWORD=your_password
 
@@ -124,10 +124,10 @@ php artisan view:cache
 ## 📁 Project Structure
 
 ```
-botble/
+devrotech-cms/
 ├── .github/workflows/     # CI/CD pipelines
 ├── docker/               # Docker configuration
-├── platform/            # Botble CMS core
+├── platform/            # DevroTech CMS core
 ├── app/                 # Laravel application
 ├── public/              # Web root
 ├── storage/             # Application storage
@@ -176,4 +176,4 @@ botble/
 
 ---
 
-**🎉 You're all set! Your Botble CMS is ready to use!**
+**🎉 You're all set! Your DevroTech CMS is ready to use!**

@@ -1,12 +1,12 @@
 version: '3.8'
 
 services:
-  # Botble CMS Application
+  # DevroTech CMS Application
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: botble-cms
+    container_name: devrotech-cms
     restart: unless-stopped
     ports:
       - "80:80"
@@ -15,8 +15,8 @@ services:
       - APP_DEBUG=false
       - DB_HOST=db
       - DB_PORT=3306
-      - DB_DATABASE=botble_production
-      - DB_USERNAME=botble_user
+      - DB_DATABASE=devrotech_production
+      - DB_USERNAME=devrotech_user
       - DB_PASSWORD=${DB_PASSWORD}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
@@ -30,7 +30,7 @@ services:
       - db
       - redis
     networks:
-      - botble-network
+      - devrotech-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 30s
@@ -41,12 +41,12 @@ services:
   # MySQL Database
   db:
     image: mysql:8.0
-    container_name: botble-db
+    container_name: devrotech-db
     restart: unless-stopped
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      - MYSQL_DATABASE=botble_production
-      - MYSQL_USER=botble_user
+      - MYSQL_DATABASE=devrotech_production
+      - MYSQL_USER=devrotech_user
       - MYSQL_PASSWORD=${DB_PASSWORD}
     volumes:
       - db_data:/var/lib/mysql
@@ -54,7 +54,7 @@ services:
     ports:
       - "3306:3306"
     networks:
-      - botble-network
+      - devrotech-network
     command: --default-authentication-plugin=mysql_native_password
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
@@ -65,14 +65,14 @@ services:
   # Redis Cache
   redis:
     image: redis:7-alpine
-    container_name: botble-redis
+    container_name: devrotech-redis
     restart: unless-stopped
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     networks:
-      - botble-network
+      - devrotech-network
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -83,7 +83,7 @@ services:
   # Nginx Reverse Proxy (Optional - for load balancing)
   nginx:
     image: nginx:alpine
-    container_name: botble-nginx
+    container_name: devrotech-nginx
     restart: unless-stopped
     ports:
       - "443:443"
@@ -94,14 +94,14 @@ services:
     depends_on:
       - app
     networks:
-      - botble-network
+      - devrotech-network
     profiles:
       - ssl
 
   # Backup Service
   backup:
     image: mysql:8.0
-    container_name: botble-backup
+    container_name: devrotech-backup
     restart: "no"
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
@@ -109,13 +109,13 @@ services:
       - ./backups:/backups
       - db_data:/var/lib/mysql
     networks:
-      - botble-network
+      - devrotech-network
     command: >
       bash -c "
         while true; do
           sleep 86400;
-          mysqldump -h db -u root -p$${MYSQL_ROOT_PASSWORD} botble_production > /backups/botble-$$(date +%Y%m%d-%H%M%S).sql;
-          find /backups -name 'botble-*.sql' -mtime +7 -delete;
+          mysqldump -h db -u root -p$${MYSQL_ROOT_PASSWORD} devrotech_production > /backups/devrotech-$$(date +%Y%m%d-%H%M%S).sql;
+          find /backups -name 'devrotech-*.sql' -mtime +7 -delete;
         done
       "
     profiles:
@@ -128,5 +128,5 @@ volumes:
     driver: local
 
 networks:
-  botble-network:
+  devrotech-network:
     driver: bridge
