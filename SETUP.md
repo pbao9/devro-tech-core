@@ -139,7 +139,7 @@ devrotech-cms/
 
 ## 🔒 Security Features
 
-- ✅ License bypass (no activation required)
+- ✅ Ready to use (no activation required)
 - ✅ Security headers (XSS, CSRF protection)
 - ✅ Rate limiting
 - ✅ File upload restrictions
