@@ -1,5 +1,5 @@
 # DevroTech CMS Production Dockerfile
-FROM php:8.1-fpm-alpine
+FROM php:8.2-fpm-alpine
 
 # Set working directory
 WORKDIR /var/www/html

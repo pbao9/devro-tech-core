@@ -1,15 +1,15 @@
 # 🚀 DevroTech CMS - Production Ready Setup
 
-[![Laravel](https://img.shields.io/badge/Laravel-10.49.0-red.svg)](https://laravel.com)
+[![Laravel](https://img.shields.io/badge/Laravel-11.46.0-red.svg)](https://laravel.com)
 [![DevroTech CMS](https://img.shields.io/badge/DevroTech%20CMS-7.5.9.1-blue.svg)](https://devrotech.com)
-[![PHP](https://img.shields.io/badge/PHP-8.1+-green.svg)](https://php.net)
+[![PHP](https://img.shields.io/badge/PHP-8.2+-green.svg)](https://php.net)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)]()
 
 ## 📋 Overview
 
 This is a production-ready DevroTech CMS setup with:
 - ✅ **DevroTech CMS 7.5.9.1** (Latest version)
-- ✅ **Laravel 10.49.0** (Latest LTS)
+- ✅ **Laravel 11.46.0** (Latest version)
 - ✅ **Ready to use** (No activation required)
 - ✅ **CI/CD Pipeline** (GitHub Actions)
 - ✅ **Docker Support** (Production ready)
@@ -20,8 +20,8 @@ This is a production-ready DevroTech CMS setup with:
 ### Core Features
 - **DevroTech CMS 7.5.9.1** - Latest version with all features
 - **Ready to Use** - No activation required, works out of the box
-- **Laravel 10.49.0** - Latest LTS version with security updates
-- **PHP 8.1+** - Modern PHP with performance improvements
+- **Laravel 11.46.0** - Latest version with modern features
+- **PHP 8.2+** - Modern PHP with performance improvements
 
 ### DevOps & Deployment
 - **GitHub Actions CI/CD** - Automated testing and deployment
@@ -38,7 +38,7 @@ This is a production-ready DevroTech CMS setup with:
 ## 🚀 Quick Start
 
 ### Prerequisites
-- PHP 8.1 or higher
+- PHP 8.2 or higher
 - Composer
 - Node.js 18+
 - MySQL 8.0+
@@ -174,7 +174,7 @@ REDIS_PASSWORD       # Redis password
    sudo apt update && sudo apt upgrade -y
    
    # Install required packages
-   sudo apt install nginx mysql-server redis-server php8.1-fpm php8.1-mysql php8.1-redis
+   sudo apt install nginx mysql-server redis-server php8.2-fpm php8.2-mysql php8.2-redis
    ```
 
 2. **Deploy application**
@@ -252,7 +252,7 @@ CMS_ENABLE_SYSTEM_UPDATER=false
 
 - **Application logs**: `storage/logs/laravel.log`
 - **Nginx logs**: `/var/log/nginx/`
-- **PHP-FPM logs**: `/var/log/php8.1-fpm.log`
+- **PHP-FPM logs**: `/var/log/php8.2-fpm.log`
 
 ### Backup Strategy
 
