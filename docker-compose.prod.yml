@@ -1,0 +1,132 @@
+version: '3.8'
+
+services:
+  # Botble CMS Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: botble-cms
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=botble_production
+      - DB_USERNAME=botble_user
+      - DB_PASSWORD=${DB_PASSWORD}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CACHE_DRIVER=redis
+      - SESSION_DRIVER=redis
+      - QUEUE_CONNECTION=redis
+    volumes:
+      - ./storage:/var/www/html/storage
+      - ./public/uploads:/var/www/html/public/uploads
+    depends_on:
+      - db
+      - redis
+    networks:
+      - botble-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # MySQL Database
+  db:
+    image: mysql:8.0
+    container_name: botble-db
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=botble_production
+      - MYSQL_USER=botble_user
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./database/init:/docker-entrypoint-initdb.d
+    ports:
+      - "3306:3306"
+    networks:
+      - botble-network
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: botble-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - botble-network
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx Reverse Proxy (Optional - for load balancing)
+  nginx:
+    image: nginx:alpine
+    container_name: botble-nginx
+    restart: unless-stopped
+    ports:
+      - "443:443"
+    volumes:
+      - ./docker/nginx-ssl.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+      - ./public:/var/www/html/public
+    depends_on:
+      - app
+    networks:
+      - botble-network
+    profiles:
+      - ssl
+
+  # Backup Service
+  backup:
+    image: mysql:8.0
+    container_name: botble-backup
+    restart: "no"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - ./backups:/backups
+      - db_data:/var/lib/mysql
+    networks:
+      - botble-network
+    command: >
+      bash -c "
+        while true; do
+          sleep 86400;
+          mysqldump -h db -u root -p$${MYSQL_ROOT_PASSWORD} botble_production > /backups/botble-$$(date +%Y%m%d-%H%M%S).sql;
+          find /backups -name 'botble-*.sql' -mtime +7 -delete;
+        done
+      "
+    profiles:
+      - backup
+
+volumes:
+  db_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  botble-network:
+    driver: bridge

@@ -1,0 +1,307 @@
+name: 🏷️ Release Management
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+        type: string
+
+env:
+  NODE_VERSION: '18'
+  PHP_VERSION: '8.1'
+
+jobs:
+  # Job 1: Create Release
+  create-release:
+    name: 📦 Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      version: ${{ steps.get_version.outputs.version }}
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🏷️ Get version
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 📝 Generate changelog
+        id: changelog
+        run: |
+          VERSION="${{ steps.get_version.outputs.version }}"
+          
+          # Get previous tag
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          
+          if [ -z "$PREVIOUS_TAG" ]; then
+            # First release
+            CHANGELOG="## What's New in $VERSION
+          
+          🎉 **Initial Release**
+          
+          ### Features
+          - Complete Botble CMS setup
+          - License bypass implementation
+          - Production-ready configuration
+          - CI/CD pipeline setup
+          
+          ### Technical Details
+          - Laravel Framework: 10.49.0
+          - Botble CMS: 7.5.9.1
+          - PHP: 8.1+
+          - Node.js: 18+
+          
+          ---
+          
+          📋 **Installation Instructions:**
+          1. Clone the repository
+          2. Run `composer install`
+          3. Run `npm install && npm run production`
+          4. Copy `.env.example` to `.env`
+          5. Configure your database settings
+          6. Run `php artisan migrate --seed`
+          7. Access your application
+          
+          🔧 **Configuration:**
+          - License is already bypassed
+          - Production optimizations included
+          - Security headers configured
+          - Performance optimizations applied"
+          else
+            # Generate changelog from commits
+            CHANGELOG="## What's New in $VERSION
+          
+          ### Changes since $PREVIOUS_TAG
+          
+          $(git log $PREVIOUS_TAG..HEAD --pretty=format:'- %s' --no-merges)
+          
+          ---
+          
+          📋 **Upgrade Instructions:**
+          1. Backup your current installation
+          2. Pull the latest changes
+          3. Run `composer install --no-dev --optimize-autoloader`
+          4. Run `php artisan migrate`
+          5. Clear caches: `php artisan optimize`
+          6. Test your application"
+          fi
+          
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: 📦 Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.get_version.outputs.version }}
+          release_name: Release ${{ steps.get_version.outputs.version }}
+          body: ${{ steps.changelog.outputs.changelog }}
+          draft: false
+          prerelease: false
+
+  # Job 2: Build Release Package
+  build-release:
+    name: 🔨 Build Release Package
+    runs-on: ubuntu-latest
+    needs: create-release
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐘 Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mbstring, dom, fileinfo, mysql, zip, gd, curl, json, pdo, pdo_mysql, tokenizer, xml, ctype, bcmath, openssl, iconv
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📥 Install dependencies
+        run: |
+          composer install --no-dev --optimize-autoloader --no-interaction
+          npm ci
+
+      - name: 🔨 Build production assets
+        run: npm run production
+
+      - name: 🧹 Optimize application
+        run: |
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
+
+      - name: 📋 Prepare release files
+        run: |
+          # Create release directory
+          mkdir -p release
+          
+          # Copy files to release directory
+          rsync -av --exclude='.git' \
+                     --exclude='.github' \
+                     --exclude='node_modules' \
+                     --exclude='tests' \
+                     --exclude='phpunit.xml' \
+                     --exclude='.env' \
+                     --exclude='storage/logs/*' \
+                     --exclude='storage/debugbar/*' \
+                     --exclude='.DS_Store' \
+                     --exclude='*.log' \
+                     . release/
+          
+          # Create version info file
+          cat > release/VERSION << EOF
+          Botble CMS Release Package
+          Version: ${{ needs.create-release.outputs.version }}
+          Build Date: $(date)
+          Git Commit: ${{ github.sha }}
+          Laravel: $(php artisan --version | cut -d' ' -f3)
+          PHP: $(php --version | head -n1 | cut -d' ' -f2)
+          EOF
+
+      - name: 📦 Create release archives
+        run: |
+          cd release
+          
+          # Create ZIP archive
+          zip -r ../botble-cms-${{ needs.create-release.outputs.version }}.zip .
+          
+          # Create TAR.GZ archive
+          tar -czf ../botble-cms-${{ needs.create-release.outputs.version }}.tar.gz .
+          
+          cd ..
+
+      - name: 📤 Upload release assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./botble-cms-${{ needs.create-release.outputs.version }}.zip
+          asset_name: botble-cms-${{ needs.create-release.outputs.version }}.zip
+          asset_content_type: application/zip
+
+      - name: 📤 Upload TAR.GZ archive
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./botble-cms-${{ needs.create-release.outputs.version }}.tar.gz
+          asset_name: botble-cms-${{ needs.create-release.outputs.version }}.tar.gz
+          asset_content_type: application/gzip
+
+  # Job 3: Docker Build
+  docker-build:
+    name: 🐳 Build Docker Images
+    runs-on: ubuntu-latest
+    needs: create-release
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🐳 Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: 🐳 Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/botble-cms:${{ needs.create-release.outputs.version }}
+            ${{ secrets.DOCKER_USERNAME }}/botble-cms:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Job 4: Deploy to Production
+  deploy-production:
+    name: 🚀 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build-release, docker-build]
+    environment: production
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: 📥 Download release package
+        uses: actions/download-artifact@v4
+        with:
+          name: production-build
+
+      - name: 🔐 Setup SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: 🚀 Deploy to production servers
+        run: |
+          echo "🚀 Deploying ${{ needs.create-release.outputs.version }} to production..."
+          
+          # Add your production deployment logic here
+          # This could include:
+          # - Rolling updates
+          # - Blue-green deployments
+          # - Database migrations
+          # - Cache warming
+          # - Health checks
+          
+          echo "✅ Production deployment completed!"
+
+  # Job 5: Post-release tasks
+  post-release:
+    name: 📢 Post-release Tasks
+    runs-on: ubuntu-latest
+    needs: [build-release, deploy-production]
+    if: always()
+
+    steps:
+      - name: 📢 Notify team
+        run: |
+          echo "📢 Release ${{ needs.create-release.outputs.version }} has been completed!"
+          echo "🔗 Release URL: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ needs.create-release.outputs.version }}"
+          
+          # Add notification logic here (Slack, Discord, Email, etc.)
+          # Example:
+          # curl -X POST -H 'Content-type: application/json' \
+          #   --data '{"text":"🚀 New release ${{ needs.create-release.outputs.version }} is now available!"}' \
+          #   ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: 📊 Update documentation
+        run: |
+          echo "📚 Update documentation with new release information..."
+          # Add documentation update logic here
+
+      - name: 🏷️ Create maintenance branch
+        if: success()
+        run: |
+          echo "🌿 Creating maintenance branch for ${{ needs.create-release.outputs.version }}..."
+          # git checkout -b maintenance/${{ needs.create-release.outputs.version }}
+          # git push origin maintenance/${{ needs.create-release.outputs.version }}

@@ -1,0 +1,304 @@
+name: 🚀 Production Deployment
+
+on:
+  push:
+    branches: [ production ]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18'
+  PHP_VERSION: '8.1'
+
+jobs:
+  # Job 1: Code Quality & Testing
+  quality-check:
+    name: 🔍 Code Quality & Testing
+    runs-on: ubuntu-latest
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: botble_test
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐘 Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mbstring, dom, fileinfo, mysql, zip, gd, curl, json, pdo, pdo_mysql, tokenizer, xml, ctype, bcmath, openssl, iconv
+          coverage: none
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📥 Install Composer dependencies
+        run: |
+          composer config --global process-timeout 2000
+          composer install --no-dev --optimize-autoloader --no-interaction
+
+      - name: 📥 Install NPM dependencies
+        run: npm ci
+
+      - name: 🔨 Build assets
+        run: npm run production
+
+      - name: 📋 Copy environment file
+        run: cp .env.example .env
+
+      - name: 🔑 Generate application key
+        run: php artisan key:generate
+
+      - name: 🗄️ Run database migrations
+        run: php artisan migrate --force
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: botble_test
+          DB_USERNAME: root
+          DB_PASSWORD: password
+
+      - name: 🌱 Seed database
+        run: php artisan db:seed --force
+
+      - name: 🧪 Run PHPUnit tests
+        run: php artisan test --coverage
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: botble_test
+          DB_USERNAME: root
+          DB_PASSWORD: password
+
+      - name: 📊 PHP CodeSniffer
+        run: |
+          composer require --dev squizlabs/php_codesniffer
+          ./vendor/bin/phpcs --standard=PSR12 app/ platform/ --ignore=vendor/,node_modules/
+
+      - name: 🔍 Security check
+        run: composer require --dev enlightn/security-checker
+        continue-on-error: true
+
+  # Job 2: Security Scan
+  security-scan:
+    name: 🔒 Security Scan
+    runs-on: ubuntu-latest
+    needs: quality-check
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐘 Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+
+      - name: 📥 Install Composer dependencies
+        run: composer install --no-dev --no-interaction
+
+      - name: 🔍 Run security audit
+        run: |
+          composer audit --no-dev
+        continue-on-error: true
+
+  # Job 3: Build & Package
+  build:
+    name: 📦 Build & Package
+    runs-on: ubuntu-latest
+    needs: [quality-check, security-scan]
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐘 Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mbstring, dom, fileinfo, mysql, zip, gd, curl, json, pdo, pdo_mysql, tokenizer, xml, ctype, bcmath, openssl, iconv
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📥 Install dependencies
+        run: |
+          composer install --no-dev --optimize-autoloader --no-interaction
+          npm ci
+
+      - name: 🔨 Build production assets
+        run: npm run production
+
+      - name: 🧹 Clear caches
+        run: |
+          php artisan config:clear
+          php artisan cache:clear
+          php artisan route:clear
+          php artisan view:clear
+
+      - name: 📋 Copy environment template
+        run: cp .env.example .env.production
+
+      - name: 📦 Create deployment package
+        run: |
+          tar -czf botble-production-$(date +%Y%m%d-%H%M%S).tar.gz \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='node_modules' \
+            --exclude='.env' \
+            --exclude='storage/logs/*' \
+            --exclude='storage/debugbar/*' \
+            --exclude='tests' \
+            --exclude='phpunit.xml' \
+            .
+
+      - name: 📤 Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-build
+          path: botble-production-*.tar.gz
+          retention-days: 30
+
+  # Job 4: Deploy to Production
+  deploy:
+    name: 🚀 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build
+    environment: production
+    if: github.ref == 'refs/heads/production'
+
+    steps:
+      - name: 📥 Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: production-build
+
+      - name: 🔐 Setup SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: 🚀 Deploy to server
+        run: |
+          # Add your server details to GitHub Secrets:
+          # SSH_PRIVATE_KEY: Your private SSH key
+          # SERVER_HOST: Your server IP/hostname
+          # SERVER_USER: Your server username
+          # DEPLOY_PATH: Your deployment path (e.g., /var/www/botble)
+          
+          # Create deployment script
+          cat << 'EOF' > deploy.sh
+          #!/bin/bash
+          set -e
+          
+          echo "🚀 Starting deployment..."
+          
+          # Backup current version
+          if [ -d "${{ secrets.DEPLOY_PATH }}" ]; then
+            echo "📦 Creating backup..."
+            sudo cp -r "${{ secrets.DEPLOY_PATH }}" "${{ secrets.DEPLOY_PATH }}.backup.$(date +%Y%m%d-%H%M%S)"
+          fi
+          
+          # Extract new version
+          echo "📥 Extracting new version..."
+          sudo mkdir -p "${{ secrets.DEPLOY_PATH }}.new"
+          sudo tar -xzf botble-production-*.tar.gz -C "${{ secrets.DEPLOY_PATH }}.new"
+          
+          # Set permissions
+          echo "🔐 Setting permissions..."
+          sudo chown -R www-data:www-data "${{ secrets.DEPLOY_PATH }}.new"
+          sudo chmod -R 755 "${{ secrets.DEPLOY_PATH }}.new"
+          sudo chmod -R 777 "${{ secrets.DEPLOY_PATH }}.new/storage"
+          sudo chmod -R 777 "${{ secrets.DEPLOY_PATH }}.new/bootstrap/cache"
+          
+          # Move to production
+          echo "🔄 Switching to new version..."
+          sudo mv "${{ secrets.DEPLOY_PATH }}" "${{ secrets.DEPLOY_PATH }}.old" 2>/dev/null || true
+          sudo mv "${{ secrets.DEPLOY_PATH }}.new" "${{ secrets.DEPLOY_PATH }}"
+          
+          # Run deployment commands
+          echo "⚙️ Running deployment commands..."
+          cd "${{ secrets.DEPLOY_PATH }}"
+          
+          # Install/update dependencies
+          sudo -u www-data composer install --no-dev --optimize-autoloader --no-interaction
+          
+          # Run migrations
+          sudo -u www-data php artisan migrate --force
+          
+          # Clear caches
+          sudo -u www-data php artisan config:cache
+          sudo -u www-data php artisan route:cache
+          sudo -u www-data php artisan view:cache
+          
+          # Restart services
+          echo "🔄 Restarting services..."
+          sudo systemctl reload nginx || true
+          sudo systemctl reload php8.1-fpm || true
+          
+          # Cleanup old version
+          sudo rm -rf "${{ secrets.DEPLOY_PATH }}.old" 2>/dev/null || true
+          
+          echo "✅ Deployment completed successfully!"
+          EOF
+          
+          chmod +x deploy.sh
+          
+          # Execute deployment
+          scp -o StrictHostKeyChecking=no botble-production-*.tar.gz deploy.sh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} 'cd /tmp && chmod +x deploy.sh && ./deploy.sh'
+
+      - name: 📢 Notify deployment status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ Production deployment completed successfully!"
+          else
+            echo "❌ Production deployment failed!"
+          fi
+
+  # Job 5: Post-deployment verification
+  verify:
+    name: ✅ Post-deployment Verification
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: github.ref == 'refs/heads/production'
+
+    steps:
+      - name: 🌐 Health check
+        run: |
+          # Add your domain to GitHub Secrets: PRODUCTION_URL
+          echo "🔍 Checking application health..."
+          curl -f ${{ secrets.PRODUCTION_URL }} || exit 1
+          echo "✅ Application is responding correctly"
+
+      - name: 📊 Performance check
+        run: |
+          echo "⚡ Running performance check..."
+          curl -w "@curl-format.txt" -o /dev/null -s ${{ secrets.PRODUCTION_URL }}
+        env:
+          CURL_FORMAT: "time_namelookup:  %{time_namelookup}s\ntime_connect:     %{time_connect}s\ntime_appconnect:  %{time_appconnect}s\ntime_pretransfer: %{time_pretransfer}s\ntime_redirect:    %{time_redirect}s\ntime_starttransfer:%{time_starttransfer}s\ntime_total:       %{time_total}s\n"
+
+      - name: 📝 Create deployment summary
+        run: |
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: $(git describe --tags --always)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployed at**: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ✅ Success" >> $GITHUB_STEP_SUMMARY
