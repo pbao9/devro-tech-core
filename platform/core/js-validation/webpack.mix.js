@@ -19,5 +19,20 @@ mix.combine([
 ], `${dist}/js/js-validation.js`)
 
 if (mix.inProduction()) {
-    // mix.copy(`${dist}/js/js-validation.js`, `${source}/public/js`)
+    mix.webpackConfig({
+        plugins: [
+            {
+                apply: (compiler) => {
+                    compiler.hooks.afterEmit.tap('CopyFilesPlugin', (compilation) => {
+                        const fs = require('fs-extra')
+                        try {
+                            fs.copySync(`${dist}/js/js-validation.js`, `${source}/public/js/js-validation.js`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                    })
+                }
+            }
+        ]
+    })
 }

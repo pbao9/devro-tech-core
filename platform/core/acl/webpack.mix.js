@@ -10,7 +10,25 @@ mix
     .js(`${source}/resources/js/role.js`, `${dist}/js`)
 
 if (mix.inProduction()) {
-    mix
-        .copy(`${dist}/js/profile.js`, `${source}/public/js`)
-        .copy(`${dist}/js/role.js`, `${source}/public/js`)
+    mix.webpackConfig({
+        plugins: [
+            {
+                apply: (compiler) => {
+                    compiler.hooks.afterEmit.tap('CopyFilesPlugin', (compilation) => {
+                        const fs = require('fs-extra')
+                        try {
+                            fs.copySync(`${dist}/js/profile.js`, `${source}/public/js/profile.js`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                        try {
+                            fs.copySync(`${dist}/js/role.js`, `${source}/public/js/role.js`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                    })
+                }
+            }
+        ]
+    })
 }

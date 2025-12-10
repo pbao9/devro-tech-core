@@ -8,5 +8,20 @@ const dist = `public/vendor/core/plugins/${directory}`
 mix.sass(`${source}/resources/sass/social-login.scss`, `${dist}/css`)
 
 if (mix.inProduction()) {
-    mix.copy(`${dist}/css`, `${source}/public/css`)
+    mix.webpackConfig({
+        plugins: [
+            {
+                apply: (compiler) => {
+                    compiler.hooks.afterEmit.tap('CopyFilesPlugin', (compilation) => {
+                        const fs = require('fs-extra')
+                        try {
+                            fs.copySync(`${dist}/css`, `${source}/public/css`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                    })
+                }
+            }
+        ]
+    })
 }

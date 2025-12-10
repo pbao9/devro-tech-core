@@ -14,11 +14,45 @@ mix
     .sass(`${source}/resources/sass/front-auth.scss`, `${dist}/css`)
 
 if (mix.inProduction()) {
-    mix
-        .copy(`${dist}/css/dashboard/style.css`, `${source}/public/css/dashboard`)
-        .copy(`${dist}/css/dashboard/style-rtl.css`, `${source}/public/css/dashboard`)
-        .copy(`${dist}/js/member-admin.js`, `${source}/public/js`)
-        .copy(`${dist}/js/dashboard/script.js`, `${source}/public/js/dashboard`)
-        .copy(`${dist}/js/dashboard/activity-logs.js`, `${source}/public/js/dashboard`)
-        .copy(`${dist}/css/front-auth.css`, `${source}/public/css`)
+    mix.webpackConfig({
+        plugins: [
+            {
+                apply: (compiler) => {
+                    compiler.hooks.afterEmit.tap('CopyFilesPlugin', (compilation) => {
+                        const fs = require('fs-extra')
+                        try {
+                            fs.copySync(`${dist}/css/dashboard/style.css`, `${source}/public/css/dashboard/style.css`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                        try {
+                            fs.copySync(`${dist}/css/dashboard/style-rtl.css`, `${source}/public/css/dashboard/style-rtl.css`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                        try {
+                            fs.copySync(`${dist}/js/member-admin.js`, `${source}/public/js/member-admin.js`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                        try {
+                            fs.copySync(`${dist}/js/dashboard/script.js`, `${source}/public/js/dashboard/script.js`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                        try {
+                            fs.copySync(`${dist}/js/dashboard/activity-logs.js`, `${source}/public/js/dashboard/activity-logs.js`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                        try {
+                            fs.copySync(`${dist}/css/front-auth.css`, `${source}/public/css/front-auth.css`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                    })
+                }
+            }
+        ]
+    })
 }

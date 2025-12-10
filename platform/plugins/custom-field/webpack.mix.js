@@ -13,10 +13,40 @@ mix
     .js(`${source}/resources/js/import-field-group.js`, `${dist}/js`)
 
 if (mix.inProduction()) {
-    mix
-        .copy(`${dist}/css/edit-field-group.css`, `${source}/public/css`)
-        .copy(`${dist}/css/custom-field.css`, `${source}/public/css`)
-        .copy(`${dist}/js/edit-field-group.js`, `${source}/public/js`)
-        .copy(`${dist}/js/use-custom-fields.js`, `${source}/public/js`)
-        .copy(`${dist}/js/import-field-group.js`, `${source}/public/js`)
+    mix.webpackConfig({
+        plugins: [
+            {
+                apply: (compiler) => {
+                    compiler.hooks.afterEmit.tap('CopyFilesPlugin', (compilation) => {
+                        const fs = require('fs-extra')
+                        try {
+                            fs.copySync(`${dist}/css/edit-field-group.css`, `${source}/public/css/edit-field-group.css`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                        try {
+                            fs.copySync(`${dist}/css/custom-field.css`, `${source}/public/css/custom-field.css`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                        try {
+                            fs.copySync(`${dist}/js/edit-field-group.js`, `${source}/public/js/edit-field-group.js`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                        try {
+                            fs.copySync(`${dist}/js/use-custom-fields.js`, `${source}/public/js/use-custom-fields.js`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                        try {
+                            fs.copySync(`${dist}/js/import-field-group.js`, `${source}/public/js/import-field-group.js`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                    })
+                }
+            }
+        ]
+    })
 }

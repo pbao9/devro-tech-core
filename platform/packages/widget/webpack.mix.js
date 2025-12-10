@@ -10,7 +10,25 @@ mix
     .sass(`${source}/resources/sass/widget.scss`, `${dist}/css`)
 
 if (mix.inProduction()) {
-    mix
-        .copy(`${dist}/js/widget.js`, `${source}/public/js`)
-        .copy(`${dist}/css/widget.css`, `${source}/public/css`)
+    mix.webpackConfig({
+        plugins: [
+            {
+                apply: (compiler) => {
+                    compiler.hooks.afterEmit.tap('CopyFilesPlugin', (compilation) => {
+                        const fs = require('fs-extra')
+                        try {
+                            fs.copySync(`${dist}/js/widget.js`, `${source}/public/js/widget.js`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                        try {
+                            fs.copySync(`${dist}/css/widget.css`, `${source}/public/css/widget.css`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                    })
+                }
+            }
+        ]
+    })
 }

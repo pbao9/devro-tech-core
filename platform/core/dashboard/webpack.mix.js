@@ -10,7 +10,25 @@ mix
     .js(`${source}/resources/js/check-for-updates.js`, `${dist}/js`)
 
 if (mix.inProduction()) {
-    mix
-        .copy(`${dist}/js/dashboard.js`, `${source}/public/js`)
-        .copy(`${dist}/js/check-for-updates.js`, `${source}/public/js`)
+    mix.webpackConfig({
+        plugins: [
+            {
+                apply: (compiler) => {
+                    compiler.hooks.afterEmit.tap('CopyFilesPlugin', (compilation) => {
+                        const fs = require('fs-extra')
+                        try {
+                            fs.copySync(`${dist}/js/dashboard.js`, `${source}/public/js/dashboard.js`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                        try {
+                            fs.copySync(`${dist}/js/check-for-updates.js`, `${source}/public/js/check-for-updates.js`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                    })
+                }
+            }
+        ]
+    })
 }

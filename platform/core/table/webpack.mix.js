@@ -11,8 +11,30 @@ mix
     .sass(`${source}/resources/sass/table.scss`, `${dist}/css`)
 
 if (mix.inProduction()) {
-    mix
-        .copy(`${dist}/js/table.js`, `${source}/public/js`)
-        .copy(`${dist}/js/filter.js`, `${source}/public/js`)
-        .copy(`${dist}/css/table.css`, `${source}/public/css`)
+    mix.webpackConfig({
+        plugins: [
+            {
+                apply: (compiler) => {
+                    compiler.hooks.afterEmit.tap('CopyFilesPlugin', (compilation) => {
+                        const fs = require('fs-extra')
+                        try {
+                            fs.copySync(`${dist}/js/table.js`, `${source}/public/js/table.js`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                        try {
+                            fs.copySync(`${dist}/js/filter.js`, `${source}/public/js/filter.js`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                        try {
+                            fs.copySync(`${dist}/css/table.css`, `${source}/public/css/table.css`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                    })
+                }
+            }
+        ]
+    })
 }

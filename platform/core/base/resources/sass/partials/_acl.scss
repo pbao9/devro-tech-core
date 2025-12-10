@@ -43,26 +43,26 @@
         .form-check-input {
             &.check-blue {
                 &:checked {
-                    background-color: $color-blue;
+                    background-color: $blue;
                 }
                 &:focus {
-                    border-color: $color-blue;
+                    border-color: $blue;
                 }
             }
             &.check-danger {
                 &:checked {
-                    background-color: $color-red;
+                    background-color: $red;
                 }
                 &:focus {
-                    border-color: $color-red;
+                    border-color: $red;
                 }
             }
             &.check-success {
                 &:checked {
-                    background-color: $color-green;
+                    background-color: $green;
                 }
                 &:focus {
-                    border-color: $color-green;
+                    border-color: $green;
                 }
             }
             &.check-yellow {

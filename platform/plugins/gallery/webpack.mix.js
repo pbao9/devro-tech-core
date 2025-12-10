@@ -14,11 +14,45 @@ mix
     .js(`${source}/resources/js/object-gallery.js`, `${dist}/js/object-gallery.js`)
 
 if (mix.inProduction()) {
-    mix
-        .copy(`${dist}/js/gallery.js`, `${source}/public/js`)
-        .copy(`${dist}/js/gallery-admin.js`, `${source}/public/js`)
-        .copy(`${dist}/js/object-gallery.js`, `${source}/public/js`)
-        .copy(`${dist}/css/gallery.css`, `${source}/public/css`)
-        .copy(`${dist}/css/admin-gallery.css`, `${source}/public/css`)
-        .copy(`${dist}/css/object-gallery.css`, `${source}/public/css`)
+    mix.webpackConfig({
+        plugins: [
+            {
+                apply: (compiler) => {
+                    compiler.hooks.afterEmit.tap('CopyFilesPlugin', (compilation) => {
+                        const fs = require('fs-extra')
+                        try {
+                            fs.copySync(`${dist}/js/gallery.js`, `${source}/public/js/gallery.js`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                        try {
+                            fs.copySync(`${dist}/js/gallery-admin.js`, `${source}/public/js/gallery-admin.js`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                        try {
+                            fs.copySync(`${dist}/js/object-gallery.js`, `${source}/public/js/object-gallery.js`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                        try {
+                            fs.copySync(`${dist}/css/gallery.css`, `${source}/public/css/gallery.css`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                        try {
+                            fs.copySync(`${dist}/css/admin-gallery.css`, `${source}/public/css/admin-gallery.css`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                        try {
+                            fs.copySync(`${dist}/css/object-gallery.css`, `${source}/public/css/object-gallery.css`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                    })
+                }
+            }
+        ]
+    })
 }

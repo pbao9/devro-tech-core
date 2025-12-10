@@ -10,7 +10,25 @@ mix
     .sass(`${source}/resources/sass/get-started.scss`, `${dist}/css`)
 
 if (mix.inProduction()) {
-    mix
-        .copy(`${dist}/js/get-started.js`, `${source}/public/js`)
-        .copy(`${dist}/css/get-started.css`, `${source}/public/css`)
+    mix.webpackConfig({
+        plugins: [
+            {
+                apply: (compiler) => {
+                    compiler.hooks.afterEmit.tap('CopyFilesPlugin', (compilation) => {
+                        const fs = require('fs-extra')
+                        try {
+                            fs.copySync(`${dist}/js/get-started.js`, `${source}/public/js/get-started.js`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                        try {
+                            fs.copySync(`${dist}/css/get-started.css`, `${source}/public/css/get-started.css`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                    })
+                }
+            }
+        ]
+    })
 }

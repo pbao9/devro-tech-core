@@ -8,5 +8,20 @@ const dist = `public/vendor/core/plugins/${directory}`
 mix.js(`${source}/resources/js/blog.js`, `${dist}/js`)
 
 if (mix.inProduction()) {
-    mix.copy(`${dist}/js/blog.js`, `${source}/public/js`)
+    mix.webpackConfig({
+        plugins: [
+            {
+                apply: (compiler) => {
+                    compiler.hooks.afterEmit.tap('CopyFilesPlugin', (compilation) => {
+                        const fs = require('fs-extra')
+                        try {
+                            fs.copySync(`${dist}/js/blog.js`, `${source}/public/js/blog.js`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                    })
+                }
+            }
+        ]
+    })
 }

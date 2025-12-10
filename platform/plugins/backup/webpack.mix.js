@@ -10,7 +10,25 @@ mix
     .sass(`${source}/resources/sass/backup.scss`, `${dist}/css`)
 
 if (mix.inProduction()) {
-    mix
-        .copy(`${dist}/js/backup.js`, `${source}/public/js`)
-        .copy(`${dist}/css/backup.css`, `${source}/public/css`)
+    mix.webpackConfig({
+        plugins: [
+            {
+                apply: (compiler) => {
+                    compiler.hooks.afterEmit.tap('CopyFilesPlugin', (compilation) => {
+                        const fs = require('fs-extra')
+                        try {
+                            fs.copySync(`${dist}/js/backup.js`, `${source}/public/js/backup.js`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                        try {
+                            fs.copySync(`${dist}/css/backup.css`, `${source}/public/css/backup.css`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                    })
+                }
+            }
+        ]
+    })
 }

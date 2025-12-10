@@ -10,7 +10,25 @@ mix
     .js(`${source}/resources/js/revision.js`, `${dist}/js`)
 
 if (mix.inProduction()) {
-    mix
-        .copy(`${dist}/css/revision.css`, `${source}/public/css`)
-        .copy(`${dist}/js/revision.js`, `${source}/public/js`)
+    mix.webpackConfig({
+        plugins: [
+            {
+                apply: (compiler) => {
+                    compiler.hooks.afterEmit.tap('CopyFilesPlugin', (compilation) => {
+                        const fs = require('fs-extra')
+                        try {
+                            fs.copySync(`${dist}/css/revision.css`, `${source}/public/css/revision.css`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                        try {
+                            fs.copySync(`${dist}/js/revision.js`, `${source}/public/js/revision.js`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                    })
+                }
+            }
+        ]
+    })
 }

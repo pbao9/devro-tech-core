@@ -10,7 +10,25 @@ mix
     .js(`${source}/resources/js/cookie-consent.js`, `${dist}/js`)
 
 if (mix.inProduction()) {
-    mix
-        .copy(`${dist}/css/cookie-consent.css`, `${source}/public/css`)
-        .copy(`${dist}/js/cookie-consent.js`, `${source}/public/js`)
+    mix.webpackConfig({
+        plugins: [
+            {
+                apply: (compiler) => {
+                    compiler.hooks.afterEmit.tap('CopyFilesPlugin', (compilation) => {
+                        const fs = require('fs-extra')
+                        try {
+                            fs.copySync(`${dist}/css/cookie-consent.css`, `${source}/public/css/cookie-consent.css`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                        try {
+                            fs.copySync(`${dist}/js/cookie-consent.js`, `${source}/public/js/cookie-consent.js`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                    })
+                }
+            }
+        ]
+    })
 }

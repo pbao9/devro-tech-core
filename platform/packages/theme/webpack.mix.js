@@ -15,12 +15,50 @@ mix
     .sass(`${source}/resources/sass/guideline.scss`, `${dist}/css`)
 
 if (mix.inProduction()) {
-    mix
-        .copy(`${dist}/js/theme-options.js`, `${source}/public/js`)
-        .copy(`${dist}/js/theme.js`, `${source}/public/js`)
-        .copy(dist + '/js/icons-field.js', source + '/public/js')
-        .copy(dist + '/js/toast.js', source + '/public/js')
-        .copy(`${dist}/css/theme-options.css`, `${source}/public/css`)
-        .copy(`${dist}/css/admin-bar.css`, `${source}/public/css`)
-        .copy(`${dist}/css/guideline.css`, `${source}/public/css`)
+    mix.webpackConfig({
+        plugins: [
+            {
+                apply: (compiler) => {
+                    compiler.hooks.afterEmit.tap('CopyFilesPlugin', (compilation) => {
+                        const fs = require('fs-extra')
+                        try {
+                            fs.copySync(`${dist}/js/theme-options.js`, `${source}/public/js/theme-options.js`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                        try {
+                            fs.copySync(`${dist}/js/theme.js`, `${source}/public/js/theme.js`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                        try {
+                            fs.copySync(dist + '/js/icons-field.js', source + '/public/js/icons-field.js')
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                        try {
+                            fs.copySync(dist + '/js/toast.js', source + '/public/js/toast.js')
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                        try {
+                            fs.copySync(`${dist}/css/theme-options.css`, `${source}/public/css/theme-options.css`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                        try {
+                            fs.copySync(`${dist}/css/admin-bar.css`, `${source}/public/css/admin-bar.css`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                        try {
+                            fs.copySync(`${dist}/css/guideline.css`, `${source}/public/css/guideline.css`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                    })
+                }
+            }
+        ]
+    })
 }

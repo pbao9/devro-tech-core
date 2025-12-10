@@ -13,10 +13,40 @@ mix
     .sass(`${source}/resources/sass/language-public.scss`, `${dist}/css`)
 
 if (mix.inProduction()) {
-    mix
-        .copy(`${dist}/js/language.js`, `${source}/public/js`)
-        .copy(`${dist}/js/language-global.js`, `${source}/public/js`)
-        .copy(`${dist}/js/language-public.js`, `${source}/public/js`)
-        .copy(`${dist}/css/language.css`, `${source}/public/css`)
-        .copy(`${dist}/css/language-public.css`, `${source}/public/css`)
+    mix.webpackConfig({
+        plugins: [
+            {
+                apply: (compiler) => {
+                    compiler.hooks.afterEmit.tap('CopyFilesPlugin', (compilation) => {
+                        const fs = require('fs-extra')
+                        try {
+                            fs.copySync(`${dist}/js/language.js`, `${source}/public/js/language.js`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                        try {
+                            fs.copySync(`${dist}/js/language-global.js`, `${source}/public/js/language-global.js`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                        try {
+                            fs.copySync(`${dist}/js/language-public.js`, `${source}/public/js/language-public.js`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                        try {
+                            fs.copySync(`${dist}/css/language.css`, `${source}/public/css/language.css`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                        try {
+                            fs.copySync(`${dist}/css/language-public.css`, `${source}/public/css/language-public.css`)
+                        } catch (err) {
+                            console.warn('Copy failed:', err.message)
+                        }
+                    })
+                }
+            }
+        ]
+    })
 }
